@@ -4,7 +4,9 @@ module AtbashCipher exposing (decode, encode)
 atbash : Char -> Char
 atbash ch =
     if Char.isAlpha ch then
-        Char.fromCode <| 122 - (Char.toCode ch - 97)
+        Char.fromCode <|
+            Char.toCode 'z'
+                - (Char.toCode ch - Char.toCode 'a')
 
     else
         ch
