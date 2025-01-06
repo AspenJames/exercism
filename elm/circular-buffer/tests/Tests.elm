@@ -110,39 +110,36 @@ tests =
             \() ->
                 run 2 [ Write 1, Write 2, Overwrite 3, Read, Read ]
                     |> Expect.equal [ WriteSuccess, WriteSuccess, ReadSuccess 2, ReadSuccess 3 ]
-        , skip <|
-            test "overwrite replaces the oldest item remaining in buffer following a read" <|
-                \() ->
-                    run 3 [ Write 1, Write 2, Write 3, Read, Write 4, Overwrite 5, Read, Read, Read ]
-                        |> Expect.equal
-                            [ WriteSuccess
-                            , WriteSuccess
-                            , WriteSuccess
-                            , ReadSuccess 1
-                            , WriteSuccess
-                            , ReadSuccess 3
-                            , ReadSuccess 4
-                            , ReadSuccess 5
-                            ]
-        , skip <|
-            test "initial clear does not affect wrapping around" <|
-                \() ->
-                    run 2 [ Clear, Write 1, Write 2, Overwrite 3, Overwrite 4, Read, Read, Read ]
-                        |> Expect.equal
-                            [ WriteSuccess
-                            , WriteSuccess
-                            , ReadSuccess 3
-                            , ReadSuccess 4
-                            , ReadFailure
-                            ]
-        , skip <|
-            test "buffer can store strings" <|
-                \() ->
-                    run 2 [ Write "hello", Write "goodbye", Read, Read ]
-                        |> Expect.equal
-                            [ WriteSuccess
-                            , WriteSuccess
-                            , ReadSuccess "hello"
-                            , ReadSuccess "goodbye"
-                            ]
+        , test "overwrite replaces the oldest item remaining in buffer following a read" <|
+            \() ->
+                run 3 [ Write 1, Write 2, Write 3, Read, Write 4, Overwrite 5, Read, Read, Read ]
+                    |> Expect.equal
+                        [ WriteSuccess
+                        , WriteSuccess
+                        , WriteSuccess
+                        , ReadSuccess 1
+                        , WriteSuccess
+                        , ReadSuccess 3
+                        , ReadSuccess 4
+                        , ReadSuccess 5
+                        ]
+        , test "initial clear does not affect wrapping around" <|
+            \() ->
+                run 2 [ Clear, Write 1, Write 2, Overwrite 3, Overwrite 4, Read, Read, Read ]
+                    |> Expect.equal
+                        [ WriteSuccess
+                        , WriteSuccess
+                        , ReadSuccess 3
+                        , ReadSuccess 4
+                        , ReadFailure
+                        ]
+        , test "buffer can store strings" <|
+            \() ->
+                run 2 [ Write "hello", Write "goodbye", Read, Read ]
+                    |> Expect.equal
+                        [ WriteSuccess
+                        , WriteSuccess
+                        , ReadSuccess "hello"
+                        , ReadSuccess "goodbye"
+                        ]
         ]
