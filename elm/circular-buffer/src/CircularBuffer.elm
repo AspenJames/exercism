@@ -21,6 +21,15 @@ nextIdx buf idx =
         idx + 1
 
 
+{-| Get content from cells at idx.
+-}
+getIdx : Int -> List (Cell a) -> Cell a
+getIdx idx =
+    List.drop idx
+        >> List.head
+        >> Maybe.withDefault Empty
+
+
 {-| New, empty CircularBuffer
 -}
 new : Int -> CircularBuffer a
@@ -48,17 +57,12 @@ write element buffer =
                 nextBuffer =
                     CircularBuffer { buf = nextBuf, readIdx = readIdx, writeIdx = nextWriteIdx }
             in
-            case List.drop writeIdx buf |> List.head of
-                Nothing ->
+            case buf |> getIdx writeIdx of
+                Empty ->
+                    Just <| nextBuffer
+
+                Cell _ ->
                     Nothing
-
-                Just n ->
-                    case n of
-                        Empty ->
-                            Just <| nextBuffer
-
-                        Cell _ ->
-                            Nothing
 
 
 {-| Write element to buffer, overwriting oldest cell if no empty cell exists.
@@ -67,33 +71,28 @@ overwrite : a -> CircularBuffer a -> CircularBuffer a
 overwrite element buffer =
     case buffer of
         CircularBuffer { buf, readIdx, writeIdx } ->
-            case List.drop writeIdx buf |> List.head of
-                Nothing ->
-                    buffer
+            let
+                nextBuf =
+                    List.concat
+                        [ List.take writeIdx buf
+                        , [ Cell element ]
+                        , List.drop (writeIdx + 1) buf
+                        ]
 
-                Just n ->
-                    let
-                        nextBuf =
-                            List.concat
-                                [ List.take writeIdx buf
-                                , [ Cell element ]
-                                , List.drop (writeIdx + 1) buf
-                                ]
+                nextWriteIdx =
+                    writeIdx |> nextIdx buf
 
-                        nextWriteIdx =
-                            writeIdx |> nextIdx buf
+                -- Only advance read index if we're actually
+                -- overwriting a cell
+                nextReadIdx =
+                    case buf |> getIdx writeIdx of
+                        Empty ->
+                            readIdx
 
-                        -- Only advance read index if we're actually
-                        -- overwriting a cell
-                        nextReadIdx =
-                            case n of
-                                Empty ->
-                                    readIdx
-
-                                Cell _ ->
-                                    readIdx |> nextIdx buf
-                    in
-                    CircularBuffer { buf = nextBuf, readIdx = nextReadIdx, writeIdx = nextWriteIdx }
+                        Cell _ ->
+                            readIdx |> nextIdx buf
+            in
+            CircularBuffer { buf = nextBuf, readIdx = nextReadIdx, writeIdx = nextWriteIdx }
 
 
 {-| Read an element from buffer, if an element exists.
@@ -116,17 +115,12 @@ read buffer =
                 nextBuffer =
                     CircularBuffer { buf = nextBuf, readIdx = nextReadIdx, writeIdx = writeIdx }
             in
-            case List.drop readIdx buf |> List.head of
-                Nothing ->
+            case buf |> getIdx readIdx of
+                Empty ->
                     Nothing
 
-                Just n ->
-                    case n of
-                        Empty ->
-                            Nothing
-
-                        Cell m ->
-                            Just ( m, nextBuffer )
+                Cell n ->
+                    Just ( n, nextBuffer )
 
 
 {-| Empty all cells of buffer
